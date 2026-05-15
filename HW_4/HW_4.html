@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HW4 - HW3-1 智能派單視覺化</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Microsoft JhengHei", Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #1b1b2f, #162447);
+      color: #fff;
+      min-height: 100vh;
+      padding: 30px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 36px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #cfd8ff;
+      margin-bottom: 30px;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .top-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .status-card {
+      text-align: center;
+    }
+
+    .status-card h2 {
+      margin: 0 0 8px;
+      color: #ffd166;
+    }
+
+    .status-value {
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    .main-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    .factory {
+      min-height: 260px;
+    }
+
+    .factory h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .queue {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      margin-top: 18px;
+      min-height: 150px;
+    }
+
+    .unit {
+      width: 80%;
+      max-width: 260px;
+      padding: 14px;
+      text-align: center;
+      border-radius: 14px;
+      font-weight: bold;
+      color: #1b1b2f;
+      background: #9bf6ff;
+      box-shadow: 0 6px 0 #4cc9f0;
+      animation: popIn 0.25s ease;
+    }
+
+    .unit.empty {
+      background: rgba(255, 255, 255, 0.12);
+      color: #cfd8ff;
+      box-shadow: none;
+      border: 1px dashed rgba(255, 255, 255, 0.3);
+    }
+
+    .unit.sword {
+      background: #ffd166;
+      box-shadow: 0 6px 0 #e09f3e;
+    }
+
+    .unit.archer {
+      background: #95d5b2;
+      box-shadow: 0 6px 0 #52b788;
+    }
+
+    .unit.knight {
+      background: #bdb2ff;
+      box-shadow: 0 6px 0 #7b2cbf;
+    }
+
+    .unit.mage {
+      background: #ffafcc;
+      box-shadow: 0 6px 0 #ff5d8f;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 14px 34px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    #startBtn {
+      background: #06d6a0;
+      color: #102a43;
+    }
+
+    #resetBtn {
+      background: #ef476f;
+      color: white;
+    }
+
+    .bottom-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .orders,
+    .logs {
+      min-height: 260px;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    .order-item,
+    .log-item {
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-left: 5px solid #4cc9f0;
+    }
+
+    .order-item.active {
+      background: rgba(255, 209, 102, 0.25);
+      border-left-color: #ffd166;
+    }
+
+    .log-item.success {
+      border-left-color: #06d6a0;
+    }
+
+    .log-item.warning {
+      border-left-color: #ffd166;
+    }
+
+    .log-item.error {
+      border-left-color: #ef476f;
+    }
+
+    .rule-list {
+      line-height: 1.8;
+      color: #e5e9ff;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .top-area,
+      .main-area,
+      .bottom-area {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>HW4：智能派單視覺化</h1>
+    <p class="subtitle">
+      使用 HTML / CSS / JavaScript 視覺化 HW3-1 的 Queue、Overflow、Underflow、負載平衡與 Dequeue 流程
+    </p>
+
+    <div class="top-area">
+      <div class="panel status-card">
+        <h2>目前回合</h2>
+        <div id="roundDisplay" class="status-value">0</div>
+      </div>
+
+      <div class="panel status-card">
+        <h2>玩家黃金</h2>
+        <div id="goldDisplay" class="status-value">180</div>
+      </div>
+
+      <div class="panel status-card">
+        <h2>目前訂單</h2>
+        <div id="currentOrderDisplay" class="status-value">尚未開始</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn">開始</button>
+      <button id="resetBtn">重製</button>
+    </div>
+
+    <div class="main-area">
+      <div class="panel factory">
+        <h2>A 廠 Queue</h2>
+        <p style="text-align:center;">一樣長時優先放 A，最多 2 個單位</p>
+        <div id="queueA" class="queue"></div>
+      </div>
+
+      <div class="panel factory">
+        <h2>B 廠 Queue</h2>
+        <p style="text-align:center;">負載平衡：放進排隊人數較少的 Queue</p>
+        <div id="queueB" class="queue"></div>
+      </div>
+    </div>
+
+    <div class="bottom-area">
+      <div class="panel orders">
+        <h2>訂單列表</h2>
+        <div id="ordersList"></div>
+      </div>
+
+      <div class="panel logs">
+        <h2>系統紀錄</h2>
+        <div id="logs"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:22px;">
+      <h2>規則說明</h2>
+      <div class="rule-list">
+        <div>1. 資源檢核：黃金不足時，輸出「黃金不足，無法生產 XX」。</div>
+        <div>2. 負載平衡：買得起時，放進排隊人數較少的 Queue；一樣長則優先放 A。</div>
+        <div>3. Overflow 防禦：A、B 產線上限都是 2，兩邊都滿則拒絕訂單。</div>
+        <div>4. Underflow 防呆：出列前先檢查是否有單位，空的話輸出「X 廠沒東西可做」。</div>
+        <div>5. 偶數回合會自動觸發 A、B 雙廠 Dequeue。</div>
+        <div>6. 空單 {} 代表玩家本回合無動作，單純推進時間。</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // HW3-1 資料設定
+    // =========================
+
+    const originalGold = 180;
+    const maxQueueSize = 2;
+
+    const costTable = {
+      "劍士": 50,
+      "弓手": 80,
+      "騎士": 80,
+      "法師": 120
+    };
+
+    // 可以依照老師 Colab 的測資修改這裡
+    const orders = [
+      { unit: "劍士" },
+      { unit: "弓手" },
+      { unit: "騎士" },
+      {},
+      { unit: "法師" },
+      { unit: "劍士" },
+      { unit: "弓手" },
+      {},
+      { unit: "騎士" },
+      { unit: "法師" }
+    ];
+
+    let playerGold = originalGold;
+    let currentRound = 0;
+    let queueA = [];
+    let queueB = [];
+    let timer = null;
+    let isRunning = false;
+
+    const roundDisplay = document.getElementById("roundDisplay");
+    const goldDisplay = document.getElementById("goldDisplay");
+    const currentOrderDisplay = document.getElementById("currentOrderDisplay");
+    const queueAElement = document.getElementById("queueA");
+    const queueBElement = document.getElementById("queueB");
+    const ordersList = document.getElementById("ordersList");
+    const logs = document.getElementById("logs");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function getUnitClass(unit) {
+      if (unit === "劍士") return "sword";
+      if (unit === "弓手") return "archer";
+      if (unit === "騎士") return "knight";
+      if (unit === "法師") return "mage";
+      return "";
+    }
+
+    function addLog(message, type = "success") {
+      const div = document.createElement("div");
+      div.className = `log-item ${type}`;
+      div.textContent = message;
+      logs.prepend(div);
+    }
+
+    function renderQueue(queue, element) {
+      element.innerHTML = "";
+
+      if (queue.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "unit empty";
+        empty.textContent = "空";
+        element.appendChild(empty);
+        return;
+      }
+
+      queue.forEach(unit => {
+        const div = document.createElement("div");
+        div.className = `unit ${getUnitClass(unit)}`;
+        div.textContent = unit;
+        element.appendChild(div);
+      });
+    }
+
+    function renderOrders() {
+      ordersList.innerHTML = "";
+
+      orders.forEach((order, index) => {
+        const div = document.createElement("div");
+        div.className = "order-item";
+
+        if (index === currentRound) {
+          div.classList.add("active");
+        }
+
+        if (Object.keys(order).length === 0) {
+          div.textContent = `第 ${index} 回合：空單 {}`;
+        } else {
+          div.textContent = `第 ${index} 回合：${order.unit}，花費 ${costTable[order.unit]} 黃金`;
+        }
+
+        ordersList.appendChild(div);
+      });
+    }
+
+    function updateDisplay() {
+      roundDisplay.textContent = currentRound;
+      goldDisplay.textContent = playerGold;
+      renderQueue(queueA, queueAElement);
+      renderQueue(queueB, queueBElement);
+      renderOrders();
+    }
+
+    function dequeueFactory(factoryName, queue) {
+      if (queue.length > 0) {
+        const unit = queue.shift();
+        addLog(`${factoryName} 廠生產完成：${unit} 出列`, "success");
+      } else {
+        addLog(`${factoryName} 廠沒東西可做`, "warning");
+      }
+    }
+
+    function smartEnqueue(unit) {
+      const cost = costTable[unit];
+
+      if (playerGold < cost) {
+        addLog(`黃金不足，無法生產 ${unit}`, "error");
+        return;
+      }
+
+      if (queueA.length >= maxQueueSize && queueB.length >= maxQueueSize) {
+        addLog(`產線全滿！${unit} 訂單拒絕`, "error");
+        return;
+      }
+
+      if (queueA.length <= queueB.length) {
+        queueA.push(unit);
+        playerGold -= cost;
+        addLog(`${unit} 分派至 A 廠，剩餘黃金：${playerGold}`, "success");
+      } else {
+        queueB.push(unit);
+        playerGold -= cost;
+        addLog(`${unit} 分派至 B 廠，剩餘黃金：${playerGold}`, "success");
+      }
+    }
+
+    function processOneRound() {
+      if (currentRound >= orders.length) {
+        clearInterval(timer);
+        timer = null;
+        isRunning = false;
+        startBtn.textContent = "開始";
+        currentOrderDisplay.textContent = "已完成";
+        addLog("所有訂單已處理完成！", "success");
+        updateDisplay();
+        return;
+      }
+
+      const order = orders[currentRound];
+
+      if (Object.keys(order).length === 0) {
+        currentOrderDisplay.textContent = "{}";
+      } else {
+        currentOrderDisplay.textContent = order.unit;
+      }
+
+      addLog(`========== 第 ${currentRound} 回合 ==========`, "warning");
+
+      // 偶數回合自動 Dequeue
+      if (currentRound % 2 === 0) {
+        if (Object.keys(order).length === 0) {
+          addLog("玩家本回合無動作，單純推進時間", "warning");
+        }
+
+        dequeueFactory("A", queueA);
+        dequeueFactory("B", queueB);
+      }
+
+      // 空單不生產
+      if (Object.keys(order).length === 0) {
+        currentRound++;
+        updateDisplay();
+        return;
+      }
+
+      // 生產派單
+      smartEnqueue(order.unit);
+
+      currentRound++;
+      updateDisplay();
+    }
+
+    function startSimulation() {
+      if (isRunning) {
+        clearInterval(timer);
+        timer = null;
+        isRunning = false;
+        startBtn.textContent = "繼續";
+        addLog("模擬暫停", "warning");
+        return;
+      }
+
+      isRunning = true;
+      startBtn.textContent = "暫停";
+
+      processOneRound();
+      timer = setInterval(processOneRound, 1200);
+    }
+
+    function resetSimulation() {
+      clearInterval(timer);
+      timer = null;
+      isRunning = false;
+
+      playerGold = originalGold;
+      currentRound = 0;
+      queueA = [];
+      queueB = [];
+
+      logs.innerHTML = "";
+      currentOrderDisplay.textContent = "尚未開始";
+      startBtn.textContent = "開始";
+
+      addLog("系統已重製", "warning");
+      updateDisplay();
+    }
+
+    startBtn.addEventListener("click", startSimulation);
+    resetBtn.addEventListener("click", resetSimulation);
+
+    resetSimulation();
+  </script>
+</body>
+</html>
